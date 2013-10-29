@@ -9,7 +9,7 @@ drive.rb
 
 A small multithreaded ruby ( >= 2.0.0) script to prepare and populate drives.
 
-wifi.sh
+wifi.rb.sh
 ========
 
 A small ruby script ( >= 1.9.3) to enable or disable WiFi based on a bunch of conditions. (With Shebang)
