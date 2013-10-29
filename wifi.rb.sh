@@ -4,15 +4,15 @@ require 'date'
 # Config
 @wifi_interface = 'en1' # en1 is the standard MacBook wireless interface
 @hour = 17 # What hour do you finish work?
-@work_ssid = 'ACW Wifi'
+@work_ssid = ''
 @work_network = {
   ip_range: '192.168.',
   broadcast: '192.168.63.255'
 }
 @home_ssid = 'Cybertron'
 @home_network = {
-  ip_range: '192.168.0',
-  broadcast: '192.168.0.255'
+  ip_range: '',
+  broadcast: ''
 }
 
 verbose_mode = ARGV.include?('-v')
