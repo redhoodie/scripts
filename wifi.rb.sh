@@ -2,8 +2,8 @@
 require 'date'
 
 # Config
-@wifi_interface = 'en1' # en1 is the standard MacBook inteface
-@hour = 17 # What time do you finish work?
+@wifi_interface = 'en1' # en1 is the standard MacBook wireless interface
+@hour = 17 # What hour do you finish work?
 @work_ssid = 'ACW Wifi'
 @work_network = {
   ip_range: '192.168.',
