@@ -12,7 +12,7 @@
 
 @settings = {
   label: 'RESOURCE',
-  data: '/Users/michael/Desktop/JOHN/*'
+  data: '/Users/michael/Desktop/CONTENT/*'
 }
 
 # These are essentially parameters to the `grep` command.
@@ -20,13 +20,26 @@
   'DOS_FAT_32'
 ]
 
+def gui_clear
+  puts "\e[H\e[2J"
+end
+
+def gui_draw_table
+  gui_clear
+  puts @drives.count.to_s + ' drive(s)'
+  @drives.each do |drive|
+    puts drive + ":\t" + status(drive)
+  end
+end
+
 def main_thread()
   while (true) do
+    gui_draw_table
     look_for_new_drives()
-    sleep(0.5)
+    sleep(0)
 
     if !@readyed && @working.empty?
-      puts 'READY / DONE.'
+      #puts 'READY / DONE.'
       @readyed = true
     end
   end
@@ -67,12 +80,25 @@ def old_a(old_list, new_list)
   old_a
 end
 
+def status(drive, status = nil)
+  file_name = drive + '.lock'
+  if status == nil
+    if File.exists?(file_name)
+      `cat #{drive}.lock`
+    else
+      ""
+    end
+  else
+    `echo '#{status}' > #{file_name}`
+  end
+end
+
 def lock_drive(drive)
   file_name = drive + '.lock'
   if File.exists?(file_name)
     return false
   end
-  `touch #{file_name}`
+  status(drive, 'locked')
 end
 
 def unlock_drive(drive)
@@ -82,6 +108,7 @@ end
 
 def format_drive(drive)
   #puts "Erasing #{drive}"
+  status(drive, 'formatting')
   `diskutil reformat #{drive}`
   if !$?.success?
     sleep 1
@@ -89,30 +116,41 @@ def format_drive(drive)
     `diskutil reformat #{drive}`
     if !$?.success?
       sleep 2
-      puts "Retrying erase #{drive}"
+      #puts "Retrying erase #{drive}"
       `diskutil reformat #{drive}`
+      if !$?.success?
+        return status(drive, 'format failed')
+      end
     end
   end
+  status(drive, 'formatted')
 end
 
 def eject_drive(drive)
-  puts "Ejecting #{drive}"
+  #puts "Ejecting #{drive}"
+  status(drive, 'ejecting')
   `diskutil unmountDisk #{drive}`
   
   if !$?.success?
     sleep 1
-    puts "retrying unmount #{drive}"
+#    puts "retrying unmount #{drive}"
     `diskutil unmountDisk #{drive}`
     if !$?.success?
       sleep 2
-      puts "retrying unmount #{drive}"
+      #puts "retrying unmount #{drive}"
       `diskutil unmountDisk #{drive}`
+      if !$?.success?
+        return status(drive, 'eject failed')
+      else
+      end
     end
   end
+  status(drive, 'ejected')
 end
 
 def new_drive(drive)
-  puts "Found " + drive
+  #status(drive, 'found')
+  #puts "Found " + drive
 
   if lock_drive(drive)
     @working.push drive
@@ -126,8 +164,10 @@ def new_drive(drive)
 
     # Label Drive
     if @armed
+      status(drive, 'labeling')
       #puts "Labeling #{drive}"
       `diskutil renameVolume #{drive} "#{@settings[:label]}"`
+      status(drive, 'labeled')
       sleep 1
     end
 
@@ -136,7 +176,9 @@ def new_drive(drive)
       mount_point = /^(?:\S+\s){2}(.*) \(/.match(`mount | grep #{drive}`)[1]
       # TODO Wait for mount point.
       #puts "Copying #{drive}"
+      status(drive, 'copying')
       `rsync -av #{@settings[:data]} "#{mount_point}/"`
+      status(drive, 'copied')
       sleep 1
     end
 
@@ -148,8 +190,8 @@ def new_drive(drive)
     @readyed = false
 
     unlock_drive(drive)
-  else 
-    puts "#{drive} locked."
+  else
+    status(drive, 'lock failed')
   end
 end
 
@@ -162,7 +204,6 @@ def look_for_new_drives
   
   new_drives = new_a(@drives, current_drives)
   old_drives = old_a(@drives, current_drives)
-
 
   @drives = current_drives
 
